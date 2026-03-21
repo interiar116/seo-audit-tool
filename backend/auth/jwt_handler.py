@@ -1,6 +1,6 @@
 import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify, current_app
 
@@ -10,8 +10,8 @@ def generate_token(user_id: int) -> str:
     expiry_hours = int(os.environ.get('JWT_EXPIRY_HOURS', 24))
     payload = {
         'user_id': user_id,
-        'exp': datetime.utcnow() + timedelta(hours=expiry_hours),
-        'iat': datetime.utcnow()
+        'exp': datetime.now(timezone.utc) + timedelta(hours=expiry_hours),
+        'iat': datetime.now(timezone.utc)
     }
     return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
 
@@ -22,7 +22,10 @@ def decode_token(token: str) -> dict:
 
 
 def require_auth(f):
-    """Decorator to protect routes requiring authentication."""
+    """
+    Decorator to protect routes requiring authentication.
+    Fetches the User from DB and passes it as the first argument (current_user).
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
@@ -32,7 +35,7 @@ def require_auth(f):
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
 
-        # Also check cookie as fallback
+        # Cookie fallback
         if not token:
             token = request.cookies.get('auth_token')
 
@@ -47,7 +50,7 @@ def require_auth(f):
 
         try:
             payload = decode_token(token)
-            request.user_id = payload['user_id']
+            user_id = payload['user_id']
         except jwt.ExpiredSignatureError:
             return jsonify({
                 'status': 'error',
@@ -65,5 +68,21 @@ def require_auth(f):
                 }
             }), 401
 
-        return f(*args, **kwargs)
+        # Fetch user from DB and pass as current_user
+        from models import User
+        current_user = User.query.get(user_id)
+        if not current_user:
+            return jsonify({
+                'status': 'error',
+                'error': {
+                    'code': 'USER_NOT_FOUND',
+                    'message': 'User account not found'
+                }
+            }), 401
+
+        # Make user_id available on request object as well (convenience)
+        request.user_id = user_id
+        request.current_user = current_user
+
+        return f(current_user, *args, **kwargs)
     return decorated
