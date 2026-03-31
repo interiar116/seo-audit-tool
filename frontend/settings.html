@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — AuditPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .settings-section { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+    .settings-card { background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .sc-head { padding: 14px 18px; border-bottom: 0.5px solid var(--border); }
+    .sc-head-title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .sc-head-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .sc-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+    .profile-row { display: flex; align-items: center; gap: 14px; }
+    .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-light); border: 1.5px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .profile-name  { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .profile-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border-light); font-size: 12.5px; }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .info-label { color: var(--text-secondary); }
+    .info-val   { color: var(--text-primary); font-weight: 500; }
+    .info-val-pass { color: var(--pass); font-weight: 500; }
+    .info-val-muted { color: var(--text-muted); }
+    .danger-zone { border-color: rgba(207,34,46,.25); }
+    .danger-zone .sc-head { background: rgba(207,34,46,.04); border-bottom-color: rgba(207,34,46,.2); }
+    .danger-zone .sc-head-title { color: var(--critical); }
+    .stat-mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat-mini { background: var(--bg-surface); border-radius: var(--radius-md); padding: 12px; text-align: center; }
+    .stat-mini-val { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+    .stat-mini-label { font-size: 10.5px; color: var(--text-muted); margin-top: 3px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+          <path d="M2 13L8 3L14 13" stroke="#3d1a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.5 9.5H11.5" stroke="#3d1a00" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">AuditPro</span>
+    </div>
+
+    <a class="nav-item" id="nav-dashboard" href="./dashboard.html">
+      <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      Dashboard
+    </a>
+
+    <div class="nav-section-label">Tools</div>
+
+    <a class="nav-item" id="nav-new-audit" href="./index.html">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5v5M4.5 7h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      New audit
+    </a>
+
+    <div class="nav-section-label">Account</div>
+
+    <a class="nav-item active" id="nav-settings" href="./settings.html">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Settings
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <span class="user-name truncate" id="sidebar-user-name">User</span>
+        <span class="gsc-badge" id="sidebar-gsc-badge" style="display:none;">GSC</span>
+      </div>
+      <button class="nav-item" id="sidebar-logout-btn" style="width:100%;border:none;background:transparent;text-align:left;">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M5 12H3a1 1 0 01-1-1V3a1 1 0 011-1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══════════════════════════════════════════════════ -->
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">Settings</span>
+    </header>
+
+    <div class="page-content">
+      <div class="settings-section">
+
+        <!-- Profile card -->
+        <div class="settings-card">
+          <div class="sc-head">
+            <div class="sc-head-title">Account</div>
+            <div class="sc-head-sub">Your Google account connected to AuditPro</div>
+          </div>
+          <div class="sc-body">
+            <div class="profile-row">
+              <div class="profile-avatar" id="settings-avatar">U</div>
+              <div>
+                <div class="profile-name"  id="settings-name">—</div>
+                <div class="profile-email" id="settings-email">—</div>
+              </div>
+            </div>
+            <div>
+              <div class="info-row">
+                <span class="info-label">Account type</span>
+                <span class="info-val">Google OAuth</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Member since</span>
+                <span class="info-val" id="settings-since">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Last login</span>
+                <span class="info-val" id="settings-last-login">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">GSC connection</span>
+                <span class="info-val-muted" id="settings-gsc">Not connected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usage stats -->
+        <div class="settings-card">
+          <div class="sc-head">
+            <div class="sc-head-title">Usage</div>
+            <div class="sc-head-sub">Your audit activity summary</div>
+          </div>
+          <div class="sc-body">
+            <div class="stat-mini-grid">
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="usage-total">—</div>
+                <div class="stat-mini-label">Total audits</div>
+              </div>
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="usage-avg">—</div>
+                <div class="stat-mini-label">Average score</div>
+              </div>
+              <div class="stat-mini">
+                <div class="stat-mini-val" id="usage-sites">—</div>
+                <div class="stat-mini-label">Unique sites</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="settings-card">
+          <div class="sc-head">
+            <div class="sc-head-title">About AuditPro</div>
+          </div>
+          <div class="sc-body">
+            <div class="info-row">
+              <span class="info-label">Version</span>
+              <span class="info-val">1.0.0 MVP</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Backend</span>
+              <span class="info-val">Python 3.13 / Flask 3.0</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Scraper</span>
+              <span class="info-val">Playwright (Chromium)</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Database</span>
+              <span class="info-val">PostgreSQL 15</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">API status</span>
+              <span class="info-val-pass" id="api-status">Checking...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="settings-card danger-zone">
+          <div class="sc-head">
+            <div class="sc-head-title">Danger zone</div>
+            <div class="sc-head-sub">These actions cannot be undone</div>
+          </div>
+          <div class="sc-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text-primary);">Clear all audits</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">Delete all your audit history permanently</div>
+              </div>
+              <button class="btn btn-danger btn-sm" id="clear-audits-btn" style="white-space:nowrap;">Clear audits</button>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text-primary);">Sign out</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">Sign out from this device</div>
+              </div>
+              <button class="btn btn-danger btn-sm" id="signout-btn">Sign out</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+  Auth.requireAuth();
+
+  async function loadSettings() {
+    const user = Auth.getUser();
+    if (user) {
+      // Profile
+      const avatarEl = document.getElementById('settings-avatar');
+      if (user.profile_picture) {
+        avatarEl.innerHTML = `<img src="${user.profile_picture}" alt="avatar">`;
+      } else {
+        avatarEl.textContent = (user.name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      }
+      document.getElementById('settings-name').textContent       = user.name || '—';
+      document.getElementById('settings-email').textContent      = user.email || '—';
+      document.getElementById('settings-since').textContent      = formatDate(user.created_at);
+      document.getElementById('settings-last-login').textContent = formatDate(user.last_login);
+
+      const gscEl = document.getElementById('settings-gsc');
+      if (user.gsc_connected) {
+        gscEl.textContent = 'Connected';
+        gscEl.className = 'info-val-pass';
+      }
+    }
+
+    // API health check
+    try {
+      await AuthAPI.health();
+      document.getElementById('api-status').textContent = 'Online';
+    } catch {
+      document.getElementById('api-status').textContent = 'Offline';
+      document.getElementById('api-status').style.color = 'var(--critical)';
+    }
+
+    // Usage stats
+    try {
+      const data = await AuditAPI.getHistory(1, 100);
+      const audits = data?.audits || [];
+      const total = audits.length;
+      const avg = total ? Math.round(audits.reduce((s,a) => s + (a.overall_score||0), 0) / total) : 0;
+      const sites = new Set(audits.map(a => {
+        try { return new URL(a.url).hostname; } catch { return a.url; }
+      })).size;
+
+      document.getElementById('usage-total').textContent = total;
+      document.getElementById('usage-avg').textContent   = avg || '—';
+      document.getElementById('usage-sites').textContent = sites;
+    } catch { /* silent */ }
+  }
+
+  // Clear audits
+  document.getElementById('clear-audits-btn').addEventListener('click', async () => {
+    if (!confirm('Delete ALL audit history? This cannot be undone.')) return;
+    try {
+      const data = await AuditAPI.getHistory(1, 100);
+      const audits = data?.audits || [];
+      await Promise.all(audits.map(a => AuditAPI.delete(a.audit_id)));
+      showToast('All audits deleted', 'success');
+      await loadSettings();
+    } catch (err) {
+      showToast('Failed to clear audits', 'error');
+    }
+  });
+
+  // Sign out
+  document.getElementById('signout-btn').addEventListener('click', () => Auth.logout());
+
+  document.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>

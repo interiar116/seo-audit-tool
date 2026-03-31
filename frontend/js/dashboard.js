@@ -12,11 +12,9 @@ const Dashboard = {
     Auth.requireAuth();
     await this.loadStats();
     await this.loadHistory();
-    this.bindNewAudit();
     this.checkForNewResult();
   },
 
-  /** Load stats row — total audits, avg score, critical issues */
   async loadStats() {
     try {
       const data = await AuditAPI.getHistory(1, 100);
@@ -35,7 +33,6 @@ const Dashboard = {
       document.getElementById('stat-avg').textContent = avgScore || '—';
       document.getElementById('stat-critical').textContent = critical;
 
-      // Colour critical count
       const critEl = document.getElementById('stat-critical');
       if (critical > 0) critEl.style.color = 'var(--critical)';
 
@@ -44,7 +41,6 @@ const Dashboard = {
     }
   },
 
-  /** Load and render audit history table */
   async loadHistory() {
     const tbody = document.getElementById('audit-tbody');
     const empty = document.getElementById('audit-empty');
@@ -70,7 +66,6 @@ const Dashboard = {
         tbody.insertAdjacentHTML('beforeend', this.renderRow(audit));
       });
 
-      // Bind row actions
       this.bindRowActions();
 
     } catch (err) {
@@ -122,25 +117,21 @@ const Dashboard = {
   },
 
   bindRowActions() {
-    // View buttons
     document.querySelectorAll('.view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        window.location.href = `./results.html?id=${id}`;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.location.href = `./results.html?id=${btn.dataset.id}`;
       });
     });
 
-    // Row click (not on action buttons)
     document.querySelectorAll('#audit-tbody tr').forEach(row => {
       row.style.cursor = 'pointer';
       row.addEventListener('click', (e) => {
         if (e.target.closest('button')) return;
-        const id = row.dataset.auditId;
-        window.location.href = `./results.html?id=${id}`;
+        window.location.href = `./results.html?id=${row.dataset.auditId}`;
       });
     });
 
-    // Delete buttons
     document.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -158,15 +149,6 @@ const Dashboard = {
     });
   },
 
-  bindNewAudit() {
-    const btn = document.getElementById('new-audit-btn');
-    const topBtn = document.getElementById('topbar-new-audit');
-    const handler = () => window.location.href = './index.html';
-    if (btn) btn.addEventListener('click', handler);
-    if (topBtn) topBtn.addEventListener('click', handler);
-  },
-
-  /** Check if we just landed from a completed audit */
   checkForNewResult() {
     const newId = sessionStorage.getItem('new_audit_id');
     if (!newId) return;

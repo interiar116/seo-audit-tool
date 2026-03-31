@@ -1,257 +1,376 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AuditPro — SEO Audit & Recovery Tool</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <style>
-    /* Landing-specific overrides */
-    body { background: #0d1117; }
-  </style>
-</head>
-<body class="landing-page">
-
-  <!-- ── Nav ──────────────────────────────────────────────────── -->
-  <nav class="landing-nav">
-    <div class="sidebar-logo" style="padding:0;">
-      <div class="logo-mark">
-        <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-          <path d="M2 13L8 3L14 13" stroke="#3d1a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4.5 9.5H11.5" stroke="#3d1a00" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <span class="logo-text">AuditPro</span>
-    </div>
-
-    <div class="landing-nav-links">
-      <a href="#features">Features</a>
-      <a href="#how-it-works">How it works</a>
-    </div>
-
-    <div class="landing-nav-right">
-      <button class="btn-google" id="nav-signin-btn">
-        <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-          <path d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
-        </svg>
-        Sign in with Google
-      </button>
-    </div>
-  </nav>
-
-  <!-- ── Hero ─────────────────────────────────────────────────── -->
-  <main class="landing-hero">
-    <div class="hero-eyebrow">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <path d="M5 1L6.18 3.4L9 3.81L7 5.76L7.47 8.59L5 7.23L2.53 8.59L3 5.76L1 3.81L3.82 3.4L5 1Z" fill="var(--accent)"/>
-      </svg>
-      Free SEO audit — no credit card required
-    </div>
-
-    <h1 class="hero-h1">
-      Audit any page in <span class="accent">10 seconds</span>.<br>Fix what actually matters.
-    </h1>
-    <p class="hero-sub">
-      Technical SEO, content quality, black hat detection — all in one place. Built for SEO professionals who need accurate, fast results.
-    </p>
-
-    <!-- ── Audit Form ── -->
-    <div class="audit-form-box">
-      <div id="form-error" class="alert alert-error" style="margin-bottom:14px;display:none;">
-        <span id="form-error-msg"></span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="url-input">Website URL</label>
-        <input
-          class="form-input dark"
-          type="url"
-          id="url-input"
-          placeholder="https://yourwebsite.com"
-          autocomplete="off"
-          autofocus
-        />
-      </div>
-
-      <div class="form-group" style="margin-top:10px;">
-        <label class="form-label" for="kw-input">Target keyword</label>
-        <input
-          class="form-input dark"
-          type="text"
-          id="kw-input"
-          placeholder="e.g. handmade thekua india"
-          autocomplete="off"
-        />
-      </div>
-
-      <div class="advanced-toggle" id="adv-toggle" style="margin-top:12px;">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M2 4L5.5 7.5L9 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Advanced options
-      </div>
-
-      <div class="advanced-panel" id="adv-panel">
-        <div class="advanced-row">
-          <div class="form-group">
-            <label class="form-label" for="secondary-kw">Secondary keyword</label>
-            <input class="form-input dark" type="text" id="secondary-kw" placeholder="optional">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="brand-name">Brand name</label>
-            <input class="form-input dark" type="text" id="brand-name" placeholder="optional">
-          </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AuditPro — SEO Audit & Recovery Tool</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      body {
+        background: #0d1117;
+      }
+    </style>
+  </head>
+  <body class="landing-page">
+    <nav class="landing-nav">
+      <div class="sidebar-logo" style="padding: 0">
+        <div class="logo-mark">
+          <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+            <path
+              d="M2 13L8 3L14 13"
+              stroke="#3d1a00"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4.5 9.5H11.5"
+              stroke="#3d1a00"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
         </div>
-        <label class="cloak-label">
-          <input type="checkbox" id="cloak-check">
-          Run cloaking detection — slower (3x page scrape)
-        </label>
+        <span class="logo-text">AuditPro</span>
       </div>
 
-      <button class="btn btn-primary btn-full btn-lg" id="audit-btn" style="margin-top:16px;">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/>
-          <path d="M7 4.5v2.5l2 1.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
-        <span id="audit-btn-text">Run audit</span>
-      </button>
+      <div class="landing-nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+      </div>
 
-      <p style="font-size:11px;color:#484f58;text-align:center;margin-top:12px;">
-        Sign in with Google to save results and access your history
+      <div class="landing-nav-right">
+        <button class="btn-google" id="nav-signin-btn" style="display: none">
+          <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+              fill="#4285F4"
+            />
+            <path
+              d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
+              fill="#34A853"
+            />
+            <path
+              d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"
+              fill="#EA4335"
+            />
+          </svg>
+          Sign in with Google
+        </button>
+        <div
+          id="nav-logged-in"
+          style="display: none; align-items: center; gap: 10px"
+        >
+          <a href="./dashboard.html" class="btn-google">← Dashboard</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="landing-hero">
+      <div class="hero-eyebrow">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path
+            d="M5 1L6.18 3.4L9 3.81L7 5.76L7.47 8.59L5 7.23L2.53 8.59L3 5.76L1 3.81L3.82 3.4L5 1Z"
+            fill="var(--accent)"
+          />
+        </svg>
+        Free SEO audit — no credit card required
+      </div>
+
+      <h1 class="hero-h1">
+        Audit any page in <span class="accent">10 seconds</span>.<br />Fix what
+        actually matters.
+      </h1>
+      <p class="hero-sub">
+        Technical SEO, content quality, black hat detection — all in one place.
+        Built for SEO professionals who need accurate, fast results.
       </p>
-    </div>
 
-    <!-- ── Feature pills ── -->
-    <div class="hero-features">
-      <div class="hero-feature">
-        <div class="hf-icon">
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-            <path d="M1.5 9L5.5 2L9.5 9" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M3 7H8" stroke="var(--accent)" stroke-width="1.1" stroke-linecap="round"/>
-          </svg>
+      <div class="audit-form-box">
+        <div
+          id="form-error"
+          class="alert alert-error"
+          style="margin-bottom: 14px; display: none"
+        >
+          <span id="form-error-msg"></span>
         </div>
-        <div class="hf-text">
-          <strong>14 technical checks</strong>
-          <span>Title, meta, canonical, robots, schema, viewport &amp; more</span>
+
+        <div class="form-group">
+          <label class="form-label" for="url-input">Website URL</label>
+          <input
+            class="form-input dark"
+            type="url"
+            id="url-input"
+            placeholder="https://yourwebsite.com"
+            autocomplete="off"
+            autofocus
+          />
+        </div>
+
+        <div class="form-group" style="margin-top: 10px">
+          <label class="form-label" for="kw-input">Target keyword</label>
+          <input
+            class="form-input dark"
+            type="text"
+            id="kw-input"
+            placeholder="e.g. handmade thekua india"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="advanced-toggle" id="adv-toggle" style="margin-top: 12px">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <path
+              d="M2 4L5.5 7.5L9 4"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Advanced options
+        </div>
+
+        <div class="advanced-panel" id="adv-panel">
+          <div class="advanced-row">
+            <div class="form-group">
+              <label class="form-label" for="secondary-kw"
+                >Secondary keyword</label
+              >
+              <input
+                class="form-input dark"
+                type="text"
+                id="secondary-kw"
+                placeholder="optional"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="brand-name">Brand name</label>
+              <input
+                class="form-input dark"
+                type="text"
+                id="brand-name"
+                placeholder="optional"
+              />
+            </div>
+          </div>
+          <label class="cloak-label">
+            <input type="checkbox" id="cloak-check" />
+            Run cloaking detection — slower (3x page scrape)
+          </label>
+        </div>
+
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          id="audit-btn"
+          style="margin-top: 16px"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle
+              cx="7"
+              cy="7"
+              r="5.5"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <path
+              d="M7 4.5v2.5l2 1.2"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span id="audit-btn-text">Run audit</span>
+        </button>
+
+        <p
+          style="
+            font-size: 11px;
+            color: #484f58;
+            text-align: center;
+            margin-top: 12px;
+          "
+          id="signin-hint"
+        >
+          Sign in with Google to save results and access your history
+        </p>
+      </div>
+
+      <div class="hero-features">
+        <div class="hero-feature">
+          <div class="hf-icon">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path
+                d="M1.5 9L5.5 2L9.5 9"
+                stroke="var(--accent)"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M3 7H8"
+                stroke="var(--accent)"
+                stroke-width="1.1"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div class="hf-text">
+            <strong>14 technical checks</strong>
+            <span
+              >Title, meta, canonical, robots, schema, viewport &amp; more</span
+            >
+          </div>
+        </div>
+        <div class="hero-feature">
+          <div class="hf-icon">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path
+                d="M1 8L3 5.5L5 7L7 3.5L9 6.5L10 5"
+                stroke="var(--accent)"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div class="hf-text">
+            <strong>10 blackhat checks</strong>
+            <span>Hidden text, cloaking, keyword stuffing, interstitials</span>
+          </div>
+        </div>
+        <div class="hero-feature">
+          <div class="hf-icon">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <circle
+                cx="5.5"
+                cy="5.5"
+                r="4"
+                stroke="var(--accent)"
+                stroke-width="1.3"
+              />
+              <path
+                d="M5.5 3.5v2.2l1.5 1"
+                stroke="var(--accent)"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <div class="hf-text">
+            <strong>Results in ~10s</strong>
+            <span>Playwright JS rendering — sees what Google sees</span>
+          </div>
         </div>
       </div>
-      <div class="hero-feature">
-        <div class="hf-icon">
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-            <path d="M1 8L3 5.5L5 7L7 3.5L9 6.5L10 5" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="hf-text">
-          <strong>10 blackhat checks</strong>
-          <span>Hidden text, cloaking, keyword stuffing, interstitials</span>
-        </div>
-      </div>
-      <div class="hero-feature">
-        <div class="hf-icon">
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-            <circle cx="5.5" cy="5.5" r="4" stroke="var(--accent)" stroke-width="1.3"/>
-            <path d="M5.5 3.5v2.2l1.5 1" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div class="hf-text">
-          <strong>Results in ~10s</strong>
-          <span>Playwright JS rendering — sees what Google sees</span>
-        </div>
-      </div>
-    </div>
-  </main>
+    </main>
 
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script>
-    // Redirect if already logged in
-    Auth.redirectIfLoggedIn();
-
-    // Handle token in URL (OAuth callback lands here)
-    const token = Auth.handleCallback();
-    if (token) {
-      Auth.refreshUser().then(() => {
-        window.location.href = './dashboard.html';
-      });
-    }
-
-    // Advanced options toggle
-    const advToggle = document.getElementById('adv-toggle');
-    const advPanel  = document.getElementById('adv-panel');
-    advToggle.addEventListener('click', () => {
-      const open = advPanel.classList.toggle('open');
-      advToggle.classList.toggle('open', open);
-    });
-
-    // Google sign-in buttons
-    document.getElementById('nav-signin-btn').addEventListener('click', () => Auth.loginWithGoogle());
-
-    // Audit form submit
-    document.getElementById('audit-btn').addEventListener('click', handleAuditSubmit);
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleAuditSubmit();
-    });
-
-    async function handleAuditSubmit() {
-      const url = document.getElementById('url-input').value.trim();
-      const kw  = document.getElementById('kw-input').value.trim();
-      const errorEl  = document.getElementById('form-error');
-      const errorMsg = document.getElementById('form-error-msg');
-
-      // Validate URL
-      if (!url) {
-        showFormError('Please enter a website URL.');
-        document.getElementById('url-input').focus();
-        return;
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      // Handle OAuth callback token in URL
+      const token = Auth.handleCallback()
+      if (token) {
+        Auth.refreshUser().then(() => {
+          window.location.href = "./dashboard.html"
+        })
       }
 
-      // Normalise URL
-      let normalised = url;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        normalised = 'https://' + url;
+      // Show correct nav based on login state
+      if (Auth.isLoggedIn()) {
+        document.getElementById("nav-signin-btn").style.display = "none"
+        document.getElementById("nav-logged-in").style.display = "flex"
+        document.getElementById("signin-hint").style.display = "none"
+      } else {
+        document.getElementById("nav-signin-btn").style.display = "flex"
+        document.getElementById("nav-logged-in").style.display = "none"
       }
 
-      try { new URL(normalised); } catch {
-        showFormError('Please enter a valid URL (e.g. https://example.com)');
-        return;
+      // Advanced options toggle
+      const advToggle = document.getElementById("adv-toggle")
+      const advPanel = document.getElementById("adv-panel")
+      advToggle.addEventListener("click", () => {
+        const open = advPanel.classList.toggle("open")
+        advToggle.classList.toggle("open", open)
+      })
+
+      // Google sign-in
+      document
+        .getElementById("nav-signin-btn")
+        .addEventListener("click", () => Auth.loginWithGoogle())
+
+      // Audit form submit
+      document
+        .getElementById("audit-btn")
+        .addEventListener("click", handleAuditSubmit)
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleAuditSubmit()
+      })
+
+      async function handleAuditSubmit() {
+        const url = document.getElementById("url-input").value.trim()
+        const kw = document.getElementById("kw-input").value.trim()
+
+        if (!url) {
+          showFormError("Please enter a website URL.")
+          document.getElementById("url-input").focus()
+          return
+        }
+
+        let normalised = url
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          normalised = "https://" + url
+        }
+
+        try {
+          new URL(normalised)
+        } catch {
+          showFormError("Please enter a valid URL (e.g. https://example.com)")
+          return
+        }
+
+        if (!Auth.isLoggedIn()) {
+          sessionStorage.setItem(
+            "pending_audit",
+            JSON.stringify({
+              url: normalised,
+              keyword: kw,
+              secondary: document.getElementById("secondary-kw").value.trim(),
+              brandName: document.getElementById("brand-name").value.trim(),
+              cloaking: document.getElementById("cloak-check").checked,
+            }),
+          )
+          await Auth.loginWithGoogle()
+          return
+        }
+
+        sessionStorage.setItem(
+          "pending_audit",
+          JSON.stringify({
+            url: normalised,
+            keyword: kw,
+            secondary: document.getElementById("secondary-kw").value.trim(),
+            brandName: document.getElementById("brand-name").value.trim(),
+            cloaking: document.getElementById("cloak-check").checked,
+          }),
+        )
+
+        window.location.href = "./audit-loading.html"
       }
 
-      // Check auth
-      if (!Auth.isLoggedIn()) {
-        // Save form data for after login
-        sessionStorage.setItem('pending_audit', JSON.stringify({
-          url: normalised,
-          keyword: kw,
-          secondary: document.getElementById('secondary-kw').value.trim(),
-          brandName: document.getElementById('brand-name').value.trim(),
-          cloaking: document.getElementById('cloak-check').checked,
-        }));
-        await Auth.loginWithGoogle();
-        return;
+      function showFormError(msg) {
+        const errorEl = document.getElementById("form-error")
+        const errorMsg = document.getElementById("form-error-msg")
+        errorMsg.textContent = msg
+        errorEl.style.display = "flex"
+        setTimeout(() => {
+          errorEl.style.display = "none"
+        }, 4000)
       }
-
-      // Store in sessionStorage and go to audit page
-      sessionStorage.setItem('pending_audit', JSON.stringify({
-        url: normalised,
-        keyword: kw,
-        secondary: document.getElementById('secondary-kw').value.trim(),
-        brandName: document.getElementById('brand-name').value.trim(),
-        cloaking: document.getElementById('cloak-check').checked,
-      }));
-
-      window.location.href = './audit-loading.html';
-    }
-
-    function showFormError(msg) {
-      const errorEl  = document.getElementById('form-error');
-      const errorMsg = document.getElementById('form-error-msg');
-      errorMsg.textContent = msg;
-      errorEl.style.display = 'flex';
-      setTimeout(() => { errorEl.style.display = 'none'; }, 4000);
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -40,7 +40,6 @@
   </head>
   <body>
     <div class="app-layout">
-      <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
       <aside class="sidebar">
         <div class="sidebar-logo">
           <div class="logo-mark">
@@ -63,7 +62,7 @@
           <span class="logo-text">AuditPro</span>
         </div>
 
-        <a class="nav-item" id="nav-dashboard" href="./dashboard.html">
+        <a class="nav-item active" id="nav-dashboard" href="./dashboard.html">
           <svg viewBox="0 0 14 14" fill="none">
             <rect
               x="1"
@@ -179,13 +178,15 @@
         </div>
       </aside>
 
-      <!-- ══ MAIN ══════════════════════════════════════════════════ -->
       <div class="main-content">
-        <!-- Topbar -->
         <header class="topbar">
           <span class="topbar-title">Dashboard</span>
           <div class="topbar-actions">
-            <button class="btn btn-primary btn-sm" id="topbar-new-audit">
+            <a
+              class="btn btn-primary btn-sm"
+              href="./index.html"
+              style="text-decoration: none"
+            >
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                 <path
                   d="M5.5 1v9M1 5.5h9"
@@ -195,12 +196,11 @@
                 />
               </svg>
               New audit
-            </button>
+            </a>
           </div>
         </header>
 
         <div class="page-content">
-          <!-- New result banner (shown after audit completes) -->
           <div
             id="new-result-banner"
             class="new-result-banner"
@@ -215,7 +215,6 @@
             >
           </div>
 
-          <!-- Stats row -->
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-label">Total audits</div>
@@ -245,19 +244,12 @@
             </div>
           </div>
 
-          <!-- Audit history table -->
           <div class="card">
             <div class="card-header">
               Recent audits
-              <button
-                class="btn btn-ghost btn-sm card-action"
-                id="new-audit-btn"
-              >
-                + New audit
-              </button>
+              <a class="card-action" href="./index.html">+ New audit</a>
             </div>
 
-            <!-- Loading state -->
             <div id="audit-loading">
               <div class="spinner"></div>
               <span style="font-size: 13px; color: var(--text-muted)"
@@ -265,7 +257,6 @@
               >
             </div>
 
-            <!-- Empty state -->
             <div id="audit-empty" class="empty-state" style="display: none">
               <svg class="empty-icon" viewBox="0 0 40 40" fill="none">
                 <circle
@@ -284,8 +275,7 @@
               </svg>
               <div class="empty-title">No audits yet</div>
               <div class="empty-desc">
-                Run your first audit to see results here. Enter a URL on the
-                home page to get started.
+                Run your first audit to see results here.
               </div>
               <a
                 href="./index.html"
@@ -295,7 +285,6 @@
               >
             </div>
 
-            <!-- Table -->
             <div class="table-wrap">
               <table
                 class="data-table"
@@ -325,7 +314,6 @@
     <script src="js/sidebar.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-      // Populate user email in stats card
       document.addEventListener("DOMContentLoaded", () => {
         const user = Auth.getUser()
         if (user) {
