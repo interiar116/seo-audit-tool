@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Running Audit — AuditPro</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      body {
+        background: #0d1117;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .progress-card {
+        background: #161b22;
+        border: 0.5px solid #30363d;
+        border-radius: 12px;
+        padding: 28px;
+        width: 100%;
+        max-width: 500px;
+      }
+      .pc-header {
+        margin-bottom: 24px;
+      }
+      .pc-url {
+        font-size: 15px;
+        font-weight: 500;
+        color: #e6edf3;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pc-meta {
+        font-size: 12px;
+        color: #8b949e;
+      }
+      .step-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 12px;
+        border-radius: 7px;
+        transition: background 0.2s;
+      }
+      .step.done {
+        background: rgba(26, 127, 55, 0.07);
+      }
+      .step.running {
+        background: #0d1117;
+        border: 0.5px solid #30363d;
+      }
+      .step.pending {
+        opacity: 0.35;
+      }
+      .step.failed {
+        background: rgba(207, 34, 46, 0.07);
+      }
+      .step-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .step-dot.done {
+        background: rgba(26, 127, 55, 0.18);
+      }
+      .step-dot.running {
+        background: rgba(240, 136, 62, 0.15);
+      }
+      .step-dot.pending {
+        background: #21262d;
+      }
+      .step-dot.failed {
+        background: rgba(207, 34, 46, 0.15);
+      }
+      .step-label {
+        font-size: 13px;
+        color: #e6edf3;
+        flex: 1;
+      }
+      .step-time {
+        font-size: 11px;
+        color: #8b949e;
+      }
+      .progress-section {
+        margin-top: 22px;
+      }
+      .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #8b949e;
+        margin-bottom: 7px;
+      }
+      .progress-track {
+        height: 5px;
+        background: #21262d;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 3px;
+        transition: width 0.6s ease;
+        width: 0%;
+      }
+      .hint {
+        font-size: 11.5px;
+        color: #484f58;
+        text-align: center;
+        margin-top: 16px;
+        line-height: 1.6;
+      }
+      .error-box {
+        background: rgba(207, 34, 46, 0.08);
+        border: 0.5px solid rgba(207, 34, 46, 0.3);
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-top: 16px;
+        display: none;
+      }
+      .error-box-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #f85149;
+        margin-bottom: 5px;
+      }
+      .error-box-msg {
+        font-size: 12px;
+        color: #8b949e;
+        line-height: 1.55;
+      }
+      .error-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-card">
+      <div class="pc-header">
+        <div class="pc-url" id="pc-url">Preparing audit...</div>
+        <div class="pc-meta" id="pc-meta">Starting up</div>
+      </div>
+
+      <div class="step-list" id="step-list">
+        <div class="step pending" id="step-robots">
+          <div class="step-dot pending" id="dot-robots"></div>
+          <span class="step-label">Fetching robots.txt</span>
+          <span class="step-time" id="time-robots"></span>
+        </div>
+        <div class="step pending" id="step-sitemap">
+          <div class="step-dot pending" id="dot-sitemap"></div>
+          <span class="step-label">Fetching sitemap</span>
+          <span class="step-time" id="time-sitemap"></span>
+        </div>
+        <div class="step pending" id="step-scrape">
+          <div class="step-dot pending" id="dot-scrape"></div>
+          <span class="step-label">Scraping page with Playwright</span>
+          <span class="step-time" id="time-scrape"></span>
+        </div>
+        <div class="step pending" id="step-technical">
+          <div class="step-dot pending" id="dot-technical"></div>
+          <span class="step-label">Running technical analysis</span>
+          <span class="step-time" id="time-technical"></span>
+        </div>
+        <div class="step pending" id="step-content">
+          <div class="step-dot pending" id="dot-content"></div>
+          <span class="step-label">Running content analysis</span>
+          <span class="step-time" id="time-content"></span>
+        </div>
+        <div class="step pending" id="step-blackhat">
+          <div class="step-dot pending" id="dot-blackhat"></div>
+          <span class="step-label">Running blackhat detection</span>
+          <span class="step-time" id="time-blackhat"></span>
+        </div>
+        <div class="step pending" id="step-report">
+          <div class="step-dot pending" id="dot-report"></div>
+          <span class="step-label">Building recovery priority list</span>
+          <span class="step-time" id="time-report"></span>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-meta">
+          <span id="progress-label">Starting...</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="error-box" id="error-box">
+        <div class="error-box-title">Audit failed</div>
+        <div class="error-box-msg" id="error-msg">
+          Something went wrong. Please try again.
+        </div>
+        <div class="error-actions">
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="retryAudit()"
+            style="border-color: #30363d; color: #e6edf3"
+          >
+            Try again
+          </button>
+          <a
+            href="./index.html"
+            class="btn btn-ghost btn-sm"
+            style="color: #8b949e"
+            >Back to home</a
+          >
+        </div>
+      </div>
+
+      <p class="hint" id="hint-text">
+        Usually takes 10–20 seconds · Playwright is rendering the page
+      </p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      Auth.requireAuth()
+
+      const STEPS = [
+        "robots",
+        "sitemap",
+        "scrape",
+        "technical",
+        "content",
+        "blackhat",
+        "report",
+      ]
+      const STEP_PROGRESS = {
+        robots: 10,
+        sitemap: 20,
+        scrape: 45,
+        technical: 60,
+        content: 75,
+        blackhat: 88,
+        report: 95,
+      }
+
+      let auditId = null
+      let startTime = null
+      let stepTimes = {}
+      let currentStep = 0
+      let pollTimer = null
+
+      function setStep(stepName, state, timeStr = "") {
+        const el = document.getElementById(`step-${stepName}`)
+        const dot = document.getElementById(`dot-${stepName}`)
+        const timeEl = document.getElementById(`time-${stepName}`)
+        if (!el) return
+        el.className = `step ${state}`
+        dot.className = `step-dot ${state}`
+        if (timeStr) timeEl.textContent = timeStr
+
+        if (state === "running") {
+          dot.innerHTML = `<div style="width:10px;height:10px;border-radius:50%;border:1.5px solid var(--accent);border-top-color:transparent;animation:spin .65s linear infinite;"></div>`
+        } else if (state === "done") {
+          dot.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 2.5" stroke="#1a7f37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+        } else if (state === "failed") {
+          dot.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="#f85149" stroke-width="1.5" stroke-linecap="round"/></svg>`
+        } else {
+          dot.innerHTML = ""
+        }
+      }
+
+      function setProgress(pct, label) {
+        document.getElementById("progress-fill").style.width = pct + "%"
+        document.getElementById("progress-pct").textContent =
+          Math.round(pct) + "%"
+        document.getElementById("progress-label").textContent = label
+      }
+
+      function animateSteps(upToIndex) {
+        for (let i = 0; i < STEPS.length; i++) {
+          if (i < upToIndex) {
+            const elapsed = stepTimes[STEPS[i]]
+              ? ((Date.now() - stepTimes[STEPS[i]]) / 1000).toFixed(1) + "s"
+              : ""
+            setStep(STEPS[i], "done", elapsed)
+          } else if (i === upToIndex) {
+            if (!stepTimes[STEPS[i]]) stepTimes[STEPS[i]] = Date.now()
+            setStep(STEPS[i], "running")
+            setProgress(
+              STEP_PROGRESS[STEPS[i]],
+              STEPS[i].charAt(0).toUpperCase() + STEPS[i].slice(1) + "...",
+            )
+          } else {
+            setStep(STEPS[i], "pending")
+          }
+        }
+      }
+
+      async function startAudit() {
+        const pending = sessionStorage.getItem("pending_audit")
+        if (!pending) {
+          window.location.href = "./index.html"
+          return
+        }
+
+        const { url, keyword, secondary, brandName, cloaking } =
+          JSON.parse(pending)
+
+        document.getElementById("pc-url").textContent = url
+          .replace(/^https?:\/\/(www\.)?/, "")
+          .replace(/\/$/, "")
+        document.getElementById("pc-meta").textContent = keyword
+          ? `Keyword: ${keyword}`
+          : "No keyword specified"
+
+        animateSteps(0)
+        startTime = Date.now()
+
+        try {
+          const data = await AuditAPI.start(url, keyword, {
+            secondaryKeyword: secondary,
+            brandName: brandName,
+            runCloakingCheck: cloaking,
+          })
+
+          auditId = data.audit_id
+          sessionStorage.removeItem("pending_audit")
+          sessionStorage.setItem("current_audit_id", auditId)
+
+          pollStatus()
+        } catch (err) {
+          showError(err.message || "Failed to start audit. Please try again.")
+        }
+      }
+
+      async function pollStatus() {
+        let attempts = 0
+
+        pollTimer = setInterval(async () => {
+          attempts++
+          try {
+            const data = await AuditAPI.getStatus(auditId)
+            updateProgress(data.status, attempts)
+
+            if (data.status === "completed") {
+              clearInterval(pollTimer)
+              onComplete()
+            } else if (data.status === "failed") {
+              clearInterval(pollTimer)
+              onFailed(data.error_message)
+            }
+
+            if (attempts > 120) {
+              clearInterval(pollTimer)
+              showError(
+                "Audit timed out. The page may be too slow to scrape. Please try again.",
+              )
+            }
+          } catch (err) {
+            clearInterval(pollTimer)
+            showError(
+              "Lost connection to server. Please check Flask is running.",
+            )
+          }
+        }, 3000)
+      }
+
+      function updateProgress(status, attempts) {
+        // Simulate step progression based on time elapsed
+        const elapsed = (Date.now() - startTime) / 1000
+
+        if (status === "running") {
+          let stepIndex = 0
+          if (elapsed > 2) stepIndex = 1
+          if (elapsed > 4) stepIndex = 2
+          if (elapsed > 10) stepIndex = 3
+          if (elapsed > 13) stepIndex = 4
+          if (elapsed > 15) stepIndex = 5
+          if (elapsed > 17) stepIndex = 6
+          if (stepIndex > currentStep) {
+            currentStep = stepIndex
+            animateSteps(currentStep)
+          }
+        }
+      }
+
+      function onComplete() {
+        // Mark all steps done
+        STEPS.forEach((s) => setStep(s, "done"))
+        setProgress(100, "Complete!")
+        document.getElementById("hint-text").textContent =
+          "Audit complete — loading results..."
+        sessionStorage.setItem("new_audit_id", auditId)
+        setTimeout(() => {
+          window.location.href = `./results.html?id=${auditId}`
+        }, 800)
+      }
+
+      function onFailed(msg) {
+        STEPS.forEach((s, i) => {
+          if (i < currentStep) setStep(s, "done")
+          else if (i === currentStep) setStep(s, "failed")
+        })
+        showError(msg || "Audit failed. The page may be unreachable.")
+      }
+
+      function showError(msg) {
+        document.getElementById("error-msg").textContent = msg
+        document.getElementById("error-box").style.display = "block"
+        document.getElementById("hint-text").style.display = "none"
+      }
+
+      function retryAudit() {
+        window.location.href = "./index.html"
+      }
+
+      document.addEventListener("DOMContentLoaded", startAudit)
+    </script>
+  </body>
+</html>

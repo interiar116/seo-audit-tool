@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Results — AuditPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .topbar-back { display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);border:0.5px solid var(--border);border-radius:var(--radius-md);padding:5px 10px;cursor:pointer;background:transparent;transition:background .12s; }
+    .topbar-back:hover { background:var(--bg-surface); }
+    .topbar-url  { font-size:13px;font-weight:500;color:var(--text-primary);flex:1;min-width:0; }
+    .topbar-meta { font-size:11px;color:var(--text-muted);margin-top:1px; }
+    #results-loading { display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;flex-direction:column; }
+    #results-error   { display:none;margin:24px; }
+    .checks-wrap     { display:flex;flex-direction:column;gap:10px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+          <path d="M2 13L8 3L14 13" stroke="#3d1a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.5 9.5H11.5" stroke="#3d1a00" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">AuditPro</span>
+    </div>
+
+    <a class="nav-item" id="nav-dashboard" href="./dashboard.html">
+      <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      Dashboard
+    </a>
+
+    <div class="nav-section-label">Tools</div>
+
+    <a class="nav-item" id="nav-new-audit" href="./index.html">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5v5M4.5 7h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      New audit
+    </a>
+
+    <div class="nav-section-label">Account</div>
+
+    <a class="nav-item" id="nav-settings" href="./settings.html">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Settings
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <span class="user-name truncate" id="sidebar-user-name">User</span>
+        <span class="gsc-badge" id="sidebar-gsc-badge" style="display:none;">GSC</span>
+      </div>
+      <button class="nav-item" id="sidebar-logout-btn" style="width:100%;border:none;background:transparent;text-align:left;">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M5 12H3a1 1 0 01-1-1V3a1 1 0 011-1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══════════════════════════════════════════════════ -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="topbar-back" onclick="window.location.href='./dashboard.html'">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        All audits
+      </button>
+      <div style="flex:1;min-width:0;margin:0 12px;">
+        <div class="topbar-url" id="topbar-url">Loading...</div>
+        <div class="topbar-meta" id="topbar-meta"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="rerun-btn">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M9.5 5.5A4 4 0 115.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9.5 1.5v4h-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Re-run audit
+      </button>
+    </header>
+
+    <!-- Loading -->
+    <div id="results-loading">
+      <div class="spinner spinner-lg"></div>
+      <span style="font-size:13px;color:var(--text-muted);">Loading results...</span>
+    </div>
+
+    <!-- Error -->
+    <div id="results-error">
+      <div class="alert alert-error">
+        <span id="results-error-msg">Failed to load results.</span>
+        <a href="./dashboard.html" style="margin-left:auto;color:var(--critical);font-size:12px;">Go back</a>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div id="results-content" style="display:none;">
+      <div class="page-content">
+
+        <!-- Score hero -->
+        <div class="score-hero-card">
+          <div class="score-hero-top">
+            <div class="big-score-box" id="big-score-box">
+              <div class="big-score-num" id="big-score-num">—</div>
+              <div class="big-score-denom" style="color:var(--text-muted);">/100</div>
+            </div>
+            <div class="score-hero-meta">
+              <div class="score-hero-url" id="hero-url">—</div>
+              <div class="score-hero-kw"  id="hero-kw">—</div>
+              <div class="score-hero-time" id="hero-time">—</div>
+            </div>
+          </div>
+          <div class="score-bars-row">
+            <div id="bar-technical"></div>
+            <div id="bar-content"></div>
+            <div id="bar-blackhat"></div>
+          </div>
+        </div>
+
+        <!-- Two column layout -->
+        <div class="results-layout">
+
+          <!-- Left: check sections -->
+          <div class="checks-wrap">
+
+            <!-- Technical SEO -->
+            <div class="section-card">
+              <div class="section-trigger">
+                <div class="section-icon" style="background:#fff0ee;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L6 2L10 10" stroke="#cf222e" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 7.5h4.4" stroke="#cf222e" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </div>
+                <span class="section-title">Technical SEO</span>
+                <div class="section-counts" id="technical-counts"></div>
+                <svg class="chevron" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="checks-list" id="technical-checks"></div>
+            </div>
+
+            <!-- Content Analysis -->
+            <div class="section-card">
+              <div class="section-trigger">
+                <div class="section-icon" style="background:#dafbe1;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4h8M2 7h8M2 10h5" stroke="#1a7f37" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </div>
+                <span class="section-title">Content analysis</span>
+                <div class="section-counts" id="content-counts"></div>
+                <svg class="chevron" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="checks-list" id="content-checks"></div>
+            </div>
+
+            <!-- Blackhat Detection -->
+            <div class="section-card">
+              <div class="section-trigger">
+                <div class="section-icon" style="background:#fff0ee;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5L1.5 10.5h9L6 1.5z" stroke="#cf222e" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 5v2.5M6 9v.5" stroke="#cf222e" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </div>
+                <span class="section-title" id="blackhat-header-title">Blackhat detection</span>
+                <div class="section-counts" id="blackhat-counts"></div>
+                <svg class="chevron" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="checks-list" id="blackhat-checks"></div>
+            </div>
+
+          </div>
+
+          <!-- Right sidebar -->
+          <div class="results-sidebar">
+
+            <div class="rc-card">
+              <div class="rc-title">Recovery priority</div>
+              <div id="recovery-list"></div>
+            </div>
+
+            <div class="rc-card">
+              <div class="rc-title">Page info</div>
+              <div id="page-info-list"></div>
+            </div>
+
+            <div class="rc-card">
+              <div class="rc-title">Keyword analysis</div>
+              <div id="keyword-list"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/results.js"></script>
+<script>
+  // Populate topbar from results data after render
+  document.addEventListener('DOMContentLoaded', () => {
+    const observer = new MutationObserver(() => {
+      const urlEl  = document.getElementById('hero-url');
+      const timeEl = document.getElementById('hero-time');
+      if (urlEl && urlEl.textContent !== '—') {
+        document.getElementById('topbar-url').textContent  = urlEl.textContent;
+        document.getElementById('topbar-meta').textContent = timeEl?.textContent || '';
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.getElementById('results-content'), { childList: true, subtree: true });
+  });
+</script>
+</body>
+</html>
