@@ -14,6 +14,13 @@ class Config:
     if DATABASE_URL.startswith('postgres://'):
         DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    'connect_args': {
+        'sslmode': 'require'
+    },
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Google OAuth
