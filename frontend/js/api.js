@@ -4,7 +4,7 @@
  * Handles JWT attachment, error parsing, and token expiry.
  */
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://seo-audit-backend-hgjz.onrender.com';
 
 /**
  * Core fetch wrapper — attaches JWT, handles errors uniformly.
