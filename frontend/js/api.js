@@ -37,11 +37,13 @@ async function apiFetch(path, options = {}) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new ApiError(
-        data?.error?.message || data?.message || 'Request failed',
+      const err = new ApiError(
+        data?.error?.message || data?.message || data?.error || 'Request failed',
         res.status,
         data?.error?.code || 'UNKNOWN_ERROR'
       );
+      err.next_available_at = data?.next_available_at || null;
+      throw err;
     }
 
     return data;
@@ -141,6 +143,10 @@ const AuditAPI = {
    */
   delete(auditId) {
     return apiFetch(`/api/audit/${auditId}`, { method: 'DELETE' });
+  },
+  /** Check if user can run an audit today */
+  checkLimit() {
+    return apiFetch('/api/audit/limit');
   },
 };
 

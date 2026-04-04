@@ -341,11 +341,20 @@
           sessionStorage.setItem("current_audit_id", auditId)
 
           pollStatus()
-        } catch (err) {
-          showError(err.message || "Failed to start audit. Please try again.")
-        }
+        }  catch (err) {
+  if (err.status === 429) {
+    const next = new Date(err.next_available_at || Date.now() + 86400000);
+    const diffMs = next - new Date();
+    const diffH = Math.floor(diffMs / 3600000);
+    const diffM = Math.floor((diffMs % 3600000) / 60000);
+    const timeStr = diffH > 0 ? `${diffH}h ${diffM}m` : `${diffM}m`;
+    showError(`Daily limit reached. Next audit available in ${timeStr}.`);
+  }
+  else {
+    showError(err.message || 'Failed to start audit. Please try again.');
+  }
       }
-
+    }
       async function pollStatus() {
         let attempts = 0
 

@@ -7,7 +7,7 @@ All audit endpoints require JWT authentication.
 from flask import Blueprint, request, jsonify
 from auth.jwt_handler import require_auth
 from models import db, Audit
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import re
 
@@ -37,6 +37,27 @@ def _validate_url(url: str) -> tuple:
     return True, url
 
 
+def _check_daily_limit(user_id: int) -> tuple:
+    """
+    Check if user has exceeded daily audit limit (1 per day).
+    Returns (allowed: bool, next_available_at: datetime or None)
+    """
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(hours=24)
+
+    last_audit = Audit.query.filter(
+        Audit.user_id == user_id,
+        Audit.created_at >= window_start,
+        Audit.status.in_(['queued', 'running', 'completed'])
+    ).order_by(Audit.created_at.desc()).first()
+
+    if not last_audit:
+        return True, None
+
+    next_available = last_audit.created_at + timedelta(hours=24)
+    return False, next_available
+
+
 @audit_bp.route("/start", methods=["POST"])
 @require_auth
 def start_audit(current_user):
@@ -57,6 +78,15 @@ def start_audit(current_user):
         return jsonify({"error": result}), 400
 
     url = result
+
+    # Check daily limit — 1 audit per 24 hours
+    allowed, next_available = _check_daily_limit(current_user.id)
+    if not allowed:
+        return jsonify({
+            "error": "Daily audit limit reached",
+            "code": "DAILY_LIMIT_REACHED",
+            "next_available_at": next_available.isoformat()
+        }), 429
 
     # Prevent duplicate running audits
     existing = Audit.query.filter_by(
@@ -133,10 +163,7 @@ def get_audit_status(current_user, audit_id):
 @audit_bp.route("/results/<int:audit_id>", methods=["GET"])
 @require_auth
 def get_audit_results(current_user, audit_id):
-    """
-    Get full audit results.
-    Query param: ?section=technical|content|blackhat|all (default: all)
-    """
+    """Get full audit results."""
     audit = Audit.query.filter_by(id=audit_id, user_id=current_user.id).first()
     if not audit:
         return jsonify({"error": "Audit not found"}), 404
@@ -168,16 +195,21 @@ def get_audit_results(current_user, audit_id):
 def get_audit_history(current_user):
     """Get user's audit history with pagination."""
     try:
-        limit = min(int(request.args.get("limit", 20)), 100)
-        offset = int(request.args.get("offset", 0))
+        page = int(request.args.get("page", 1))
+        per_page = min(int(request.args.get("per_page", 20)), 100)
+        limit = min(int(request.args.get("limit", per_page)), 100)
+        offset = int(request.args.get("offset", (page - 1) * limit))
     except ValueError:
-        return jsonify({"error": "Invalid limit or offset"}), 400
+        return jsonify({"error": "Invalid pagination parameters"}), 400
 
     audits = Audit.query.filter_by(user_id=current_user.id)\
         .order_by(Audit.created_at.desc())\
         .limit(limit).offset(offset).all()
 
     total = Audit.query.filter_by(user_id=current_user.id).count()
+
+    # Check daily limit to include in response
+    allowed, next_available = _check_daily_limit(current_user.id)
 
     return jsonify({
         "audits": [
@@ -189,6 +221,7 @@ def get_audit_history(current_user):
                 "technical_score": a.technical_score,
                 "content_score": a.content_score,
                 "blackhat_risk_score": a.blackhat_risk_score,
+                "primary_keyword": a.target_keyword or a.primary_keyword,
                 "created_at": a.created_at.isoformat() if a.created_at else None,
                 "completed_at": a.completed_at.isoformat() if a.completed_at else None,
             }
@@ -197,6 +230,21 @@ def get_audit_history(current_user):
         "total": total,
         "limit": limit,
         "offset": offset,
+        "daily_limit": {
+            "allowed": allowed,
+            "next_available_at": next_available.isoformat() if next_available else None
+        }
+    }), 200
+
+
+@audit_bp.route("/limit", methods=["GET"])
+@require_auth
+def get_limit_status(current_user):
+    """Check if user can run an audit right now."""
+    allowed, next_available = _check_daily_limit(current_user.id)
+    return jsonify({
+        "allowed": allowed,
+        "next_available_at": next_available.isoformat() if next_available else None
     }), 200
 
 
