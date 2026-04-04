@@ -38,9 +38,9 @@ async function apiFetch(path, options = {}) {
 
     if (!res.ok) {
       const err = new ApiError(
-        data?.error?.message || data?.message || data?.error || 'Request failed',
+        data?.error?.message || (typeof data?.error === 'string' ? data.error : null) || data?.message || 'Request failed',
         res.status,
-        data?.error?.code || 'UNKNOWN_ERROR'
+        data?.code || data?.error?.code || 'UNKNOWN_ERROR'
       );
       err.next_available_at = data?.next_available_at || null;
       throw err;
