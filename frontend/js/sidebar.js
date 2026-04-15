@@ -1,5 +1,5 @@
 /**
- * AuditPro — Sidebar Component
+ * AuditSentinel — Sidebar Component
  * Handles active nav state, user info population, logout.
  * Import on every page that uses the app shell layout.
  */
