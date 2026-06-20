@@ -188,11 +188,15 @@ def get_audit_history(current_user):
     except ValueError:
         return jsonify({"error": "Invalid pagination parameters"}), 400
 
-    audits = Audit.query.filter_by(user_id=current_user.id)\
-        .order_by(Audit.created_at.desc())\
-        .limit(limit).offset(offset).all()
+    audits = Audit.query.filter(
+        Audit.user_id == current_user.id,
+        Audit.is_competitive != True
+    ).order_by(Audit.created_at.desc()).limit(limit).offset(offset).all()
 
-    total = Audit.query.filter_by(user_id=current_user.id).count()
+    total = Audit.query.filter(
+        Audit.user_id == current_user.id,
+        Audit.is_competitive != True
+    ).count()
 
     # Check daily limit to include in response
     allowed, next_available = _check_daily_limit(current_user.id)
