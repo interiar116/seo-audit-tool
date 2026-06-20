@@ -188,15 +188,17 @@ def get_audit_history(current_user):
     except ValueError:
         return jsonify({"error": "Invalid pagination parameters"}), 400
 
-    audits = Audit.query.filter(
-        Audit.user_id == current_user.id,
-        Audit.is_competitive != True
-    ).order_by(Audit.created_at.desc()).limit(limit).offset(offset).all()
+    competitive = request.args.get('competitive', 'false').lower() == 'true'
 
-    total = Audit.query.filter(
-        Audit.user_id == current_user.id,
-        Audit.is_competitive != True
-    ).count()
+    if competitive:
+        base_filter = [Audit.user_id == current_user.id, Audit.is_competitive == True]
+    else:
+        base_filter = [Audit.user_id == current_user.id, Audit.is_competitive != True]
+
+    audits = Audit.query.filter(*base_filter)\
+        .order_by(Audit.created_at.desc()).limit(limit).offset(offset).all()
+
+    total = Audit.query.filter(*base_filter).count()
 
     # Check daily limit to include in response
     allowed, next_available = _check_daily_limit(current_user.id)
@@ -212,6 +214,7 @@ def get_audit_history(current_user):
                 "content_score": a.content_score,
                 "blackhat_risk_score": a.blackhat_risk_score,
                 "primary_keyword": a.target_keyword or a.primary_keyword,
+                "is_competitive": bool(a.is_competitive),
                 "created_at": a.created_at.isoformat() if a.created_at else None,
                 "completed_at": a.completed_at.isoformat() if a.completed_at else None,
             }

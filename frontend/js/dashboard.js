@@ -7,17 +7,34 @@ const Dashboard = {
   page: 1,
   perPage: 15,
   audits: [],
+  currentTab: 'main',
 
   async init() {
     Auth.requireAuth();
     await this.loadStats();
     await this.loadHistory();
     this.checkForNewResult();
+    this.bindTabs();
+  },
+
+  bindTabs() {
+    document.getElementById('tab-main')?.addEventListener('click', () => {
+      this.currentTab = 'main';
+      document.getElementById('tab-main').classList.add('active');
+      document.getElementById('tab-competitors').classList.remove('active');
+      this.loadHistory();
+    });
+    document.getElementById('tab-competitors')?.addEventListener('click', () => {
+      this.currentTab = 'competitors';
+      document.getElementById('tab-competitors').classList.add('active');
+      document.getElementById('tab-main').classList.remove('active');
+      this.loadHistory();
+    });
   },
 
   async loadStats() {
     try {
-      const data = await AuditAPI.getHistory(1, 100);
+      const data = await AuditAPI.getHistory(1, 100, false);
       const audits = data?.audits || [];
 
       const total = audits.length;
@@ -44,24 +61,31 @@ const Dashboard = {
   async loadHistory() {
     const tbody = document.getElementById('audit-tbody');
     const empty = document.getElementById('audit-empty');
+    const emptyComp = document.getElementById('audit-empty-competitors');
     const loading = document.getElementById('audit-loading');
+    const isCompetitive = this.currentTab === 'competitors';
 
     loading.style.display = 'flex';
+    empty.style.display = 'none';
+    emptyComp.style.display = 'none';
     tbody.innerHTML = '';
 
     try {
-      const data = await AuditAPI.getHistory(this.page, this.perPage);
+      const data = await AuditAPI.getHistory(this.page, this.perPage, isCompetitive);
       const audits = data?.audits || [];
       this.audits = audits;
 
       loading.style.display = 'none';
 
       if (audits.length === 0) {
-        empty.style.display = 'flex';
+        if (isCompetitive) {
+          emptyComp.style.display = 'flex';
+        } else {
+          empty.style.display = 'flex';
+        }
         return;
       }
 
-      empty.style.display = 'none';
       audits.forEach(audit => {
         tbody.insertAdjacentHTML('beforeend', this.renderRow(audit));
       });
@@ -141,7 +165,7 @@ const Dashboard = {
           await AuditAPI.delete(id);
           showToast('Audit deleted', 'success');
           await this.loadHistory();
-          await this.loadStats();
+          if (this.currentTab === 'main') await this.loadStats();
         } catch (err) {
           showToast('Failed to delete audit', 'error');
         }

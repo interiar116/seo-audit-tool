@@ -135,8 +135,8 @@ const AuditAPI = {
    * @param {number} page
    * @param {number} perPage
    */
-  getHistory(page = 1, perPage = 20) {
-    return apiFetch(`/api/audit/history?page=${page}&per_page=${perPage}`);
+  getHistory(page = 1, perPage = 20, competitive = false) {
+    return apiFetch(`/api/audit/history?page=${page}&per_page=${perPage}&competitive=${competitive}`);
   },
 
   /**
