@@ -5,10 +5,12 @@ All routes require JWT auth + admin email verification.
 """
 
 import os
+import io
+import csv
 import logging
 from functools import wraps
 from datetime import date
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from sqlalchemy import func, or_
 
 from auth.jwt_handler import require_auth
@@ -47,16 +49,63 @@ def get_stats(current_user):
     gsc_connected = User.query.filter_by(gsc_connected=True).count()
     running_now = Audit.query.filter_by(status='running').count()
 
+    # Score distribution across completed audits
+    scores = db.session.query(Audit.overall_score).filter(
+        Audit.status == 'completed',
+        Audit.is_competitive != True,
+    ).all()
+    dist = {'good': 0, 'medium': 0, 'bad': 0, 'unscored': 0}
+    for (s,) in scores:
+        if s is None:
+            dist['unscored'] += 1
+        elif s >= 70:
+            dist['good'] += 1
+        elif s >= 40:
+            dist['medium'] += 1
+        else:
+            dist['bad'] += 1
+    dist['total'] = sum(dist.values())
+
+    # Audit status breakdown
+    status_counts = db.session.query(
+        Audit.status, func.count(Audit.id)
+    ).group_by(Audit.status).all()
+    status_breakdown = {s: c for s, c in status_counts}
+
     return jsonify({
         'users': total_users,
         'audits': total_audits,
         'avg_score': avg_score,
         'gsc_connected': gsc_connected,
         'running': running_now,
+        'score_distribution': dist,
+        'status_breakdown': status_breakdown,
     }), 200
 
 
-# ── Users ────────────────────────────────────────────────────────────────────
+# ── Recent Activity ───────────────────────────────────────────────────────────
+
+@admin_bp.route('/recent-activity', methods=['GET'])
+@require_admin
+def get_recent_activity(current_user):
+    rows = db.session.query(Audit, User).join(User, Audit.user_id == User.id)\
+        .filter(Audit.status == 'completed')\
+        .order_by(Audit.completed_at.desc()).limit(10).all()
+
+    return jsonify({
+        'activity': [{
+            'audit_id': a.id,
+            'url': a.url,
+            'user_email': u.email,
+            'user_name': u.name,
+            'overall_score': a.overall_score,
+            'is_competitive': bool(a.is_competitive),
+            'completed_at': a.completed_at.isoformat() if a.completed_at else None,
+        } for a, u in rows]
+    }), 200
+
+
+# ── Users ─────────────────────────────────────────────────────────────────────
 
 @admin_bp.route('/users', methods=['GET'])
 @require_admin
@@ -79,6 +128,22 @@ def get_users(current_user):
             'audit_count': audit_count,
         })
     return jsonify({'users': result}), 200
+
+
+@admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@require_admin
+def delete_user(current_user, user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    if user.email in ADMIN_EMAILS:
+        return jsonify({'error': 'Cannot delete an admin account'}), 403
+
+    # Delete all user data explicitly before removing the user record
+    Audit.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': f'User {user_id} and all their data deleted'}), 200
 
 
 @admin_bp.route('/users/<int:user_id>/audits', methods=['GET'])
@@ -106,7 +171,51 @@ def get_user_audits(current_user, user_id):
     }), 200
 
 
-# ── All Audits ───────────────────────────────────────────────────────────────
+# ── All Audits ────────────────────────────────────────────────────────────────
+
+@admin_bp.route('/audits/export', methods=['GET'])
+@require_admin
+def export_audits(current_user):
+    """Download all audits as CSV."""
+    rows = db.session.query(Audit, User).join(User, Audit.user_id == User.id)\
+        .order_by(Audit.created_at.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'audit_id', 'url', 'user_email', 'user_name',
+        'overall_score', 'technical_score', 'content_score', 'blackhat_risk_score',
+        'status', 'is_competitive', 'target_keyword', 'created_at', 'completed_at',
+    ])
+    for a, u in rows:
+        writer.writerow([
+            a.id, a.url, u.email, u.name or '',
+            a.overall_score, a.technical_score, a.content_score, a.blackhat_risk_score,
+            a.status, bool(a.is_competitive), a.target_keyword or '',
+            a.created_at.isoformat() if a.created_at else '',
+            a.completed_at.isoformat() if a.completed_at else '',
+        ])
+
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=audits-export.csv'},
+    )
+
+
+@admin_bp.route('/audits/<int:audit_id>', methods=['DELETE'])
+@require_admin
+def delete_audit(current_user, audit_id):
+    audit = Audit.query.get(audit_id)
+    if not audit:
+        return jsonify({'error': 'Audit not found'}), 404
+    if audit.status == 'running':
+        return jsonify({'error': 'Cannot delete a running audit'}), 409
+    db.session.delete(audit)
+    db.session.commit()
+    return jsonify({'message': f'Audit {audit_id} deleted'}), 200
+
 
 @admin_bp.route('/audits', methods=['GET'])
 @require_admin

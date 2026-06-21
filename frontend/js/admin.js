@@ -15,7 +15,6 @@ const Admin = {
 
   async init() {
     Auth.requireAuth();
-
     const user = Auth.getUser();
     if (!user || user.email !== ADMIN_EMAIL) {
       window.location.href = './dashboard.html';
@@ -25,7 +24,11 @@ const Admin = {
     this.bindTabs();
     this.bindControls();
 
-    await this.loadStats();
+    // Load all overview data in parallel
+    await Promise.all([
+      this.loadStats(),
+      this.loadRecentActivity(),
+    ]);
     await this.loadUsers();
   },
 
@@ -60,7 +63,9 @@ const Admin = {
   // ── Controls ──────────────────────────────────────────────────────────────
 
   bindControls() {
-    document.getElementById('refresh-stats-btn')?.addEventListener('click', () => this.loadStats());
+    document.getElementById('refresh-stats-btn')?.addEventListener('click', async () => {
+      await Promise.all([this.loadStats(), this.loadRecentActivity()]);
+    });
 
     document.getElementById('user-search')?.addEventListener('input', e => {
       this.filterUsers(e.target.value);
@@ -71,29 +76,29 @@ const Admin = {
       this.auditStatus = document.getElementById('audit-status-filter')?.value || '';
       this.loadAudits(1, this.auditStatus, this.auditSearch);
     });
-
     document.getElementById('audit-search')?.addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('audit-search-btn')?.click();
     });
+
+    document.getElementById('export-csv-btn')?.addEventListener('click', () => this.exportAudits());
 
     document.getElementById('add-update-toggle')?.addEventListener('click', () => {
       const panel = document.getElementById('update-form-panel');
       if (panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
     });
-
     document.getElementById('add-update-cancel')?.addEventListener('click', () => {
       document.getElementById('update-form-panel').style.display = 'none';
       document.getElementById('update-form')?.reset();
     });
-
     document.getElementById('update-form')?.addEventListener('submit', e => this.handleAddUpdate(e));
   },
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
+  // ── Stats + Score Distribution ────────────────────────────────────────────
 
   async loadStats() {
     try {
       const data = await AdminAPI.getStats();
+
       document.getElementById('stat-users').textContent   = data.users ?? '—';
       document.getElementById('stat-audits').textContent  = data.audits ?? '—';
       document.getElementById('stat-avg').textContent     = data.avg_score ?? '—';
@@ -101,8 +106,74 @@ const Admin = {
       const runEl = document.getElementById('stat-running');
       runEl.textContent = data.running ?? '0';
       if (data.running > 0) runEl.style.color = 'var(--accent)';
+
+      this.renderScoreDistribution(data.score_distribution || {});
     } catch (err) {
       console.warn('Stats failed:', err.message);
+    }
+  },
+
+  renderScoreDistribution(dist) {
+    const wrap = document.getElementById('score-dist-wrap');
+    const totalEl = document.getElementById('dist-total-label');
+    if (!wrap) return;
+
+    const total = dist.total || 0;
+    if (totalEl) totalEl.textContent = `${total} completed audit${total !== 1 ? 's' : ''}`;
+
+    if (total === 0) {
+      wrap.innerHTML = '<p style="font-size:12px;color:var(--text-muted);margin:0;">No completed audits yet.</p>';
+      return;
+    }
+
+    const pct = n => total > 0 ? Math.round((n / total) * 100) : 0;
+    const rows = [
+      { label: 'Good 70+',  count: dist.good     || 0, cls: 'dist-fill-good',    color: '#1a7f37' },
+      { label: 'Med 40–69', count: dist.medium    || 0, cls: 'dist-fill-medium',  color: 'var(--accent)' },
+      { label: 'Poor <40',  count: dist.bad       || 0, cls: 'dist-fill-bad',     color: '#cf222e' },
+      { label: 'Unscored',  count: dist.unscored  || 0, cls: 'dist-fill-unscore', color: '#d0d7de' },
+    ];
+
+    wrap.innerHTML = rows.map(r => `
+      <div class="dist-row">
+        <span class="dist-label" style="color:${r.color};">${r.label}</span>
+        <div class="dist-bar-track">
+          <div class="dist-bar-fill ${r.cls}" style="width:${pct(r.count)}%;"></div>
+        </div>
+        <span class="dist-count" style="color:${r.count > 0 ? r.color : 'var(--text-muted)'};">${r.count}</span>
+        <span class="dist-pct">${pct(r.count)}%</span>
+      </div>`).join('');
+  },
+
+  // ── Recent Activity ───────────────────────────────────────────────────────
+
+  async loadRecentActivity() {
+    const wrap = document.getElementById('recent-activity-wrap');
+    if (!wrap) return;
+    try {
+      const data = await AdminAPI.getRecentActivity();
+      const items = data.activity || [];
+      if (!items.length) {
+        wrap.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:12px;">No completed audits yet.</div>';
+        return;
+      }
+      wrap.innerHTML = items.map(a => {
+        const initials = (a.user_name || a.user_email || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        const scoreHtml = a.overall_score != null
+          ? `<span class="score-pill ${scoreClass(a.overall_score)}" style="min-width:30px;font-size:10px;height:18px;">${a.overall_score}</span>`
+          : '<span style="color:var(--text-muted);font-size:11px;">—</span>';
+        return `<div class="activity-row">
+          <div class="user-avatar-sm" style="width:22px;height:22px;font-size:9px;">${initials}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="activity-url">${displayUrl(a.url)}</div>
+            <div class="activity-meta">${a.user_email}</div>
+          </div>
+          ${scoreHtml}
+          <span class="activity-meta">${timeAgo(a.completed_at)}</span>
+        </div>`;
+      }).join('');
+    } catch (err) {
+      wrap.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:12px;">Failed to load activity.</div>';
     }
   },
 
@@ -124,7 +195,7 @@ const Admin = {
   renderUsers(users) {
     const tbody = document.getElementById('users-tbody');
     if (!users.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:28px;">No users found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px;">No users found</td></tr>';
       return;
     }
 
@@ -133,13 +204,17 @@ const Admin = {
       const gscHtml = u.gsc_connected
         ? '<span class="gsc-badge" style="display:inline-block;">GSC</span>'
         : '<span style="color:var(--text-muted);font-size:11px;">—</span>';
+      const isAdmin = u.email === ADMIN_EMAIL;
       return `
         <tr>
           <td>
             <div style="display:flex;align-items:center;gap:9px;">
               <div class="user-avatar-sm">${initials}</div>
               <div>
-                <div style="font-size:12.5px;font-weight:500;color:var(--text-primary);">${u.name || '—'}</div>
+                <div style="font-size:12.5px;font-weight:500;color:var(--text-primary);">
+                  ${u.name || '—'}
+                  ${isAdmin ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(240,136,62,.12);color:var(--accent);margin-left:4px;">ADMIN</span>' : ''}
+                </div>
                 <div style="font-size:11px;color:var(--text-muted);">${u.email}</div>
               </div>
             </div>
@@ -149,21 +224,29 @@ const Admin = {
           <td>${gscHtml}</td>
           <td style="font-size:12px;font-weight:500;">${u.audit_count}</td>
           <td style="text-align:right;">
-            <button class="btn btn-secondary btn-sm view-user-audits-btn"
-              data-user-id="${u.id}">View Audits</button>
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button class="btn btn-secondary btn-sm view-user-audits-btn" data-user-id="${u.id}">View Audits</button>
+              ${!isAdmin ? `<button class="btn btn-ghost btn-sm delete-user-btn" data-user-id="${u.id}" data-user-email="${u.email}"
+                style="color:var(--critical);padding:5px 7px;" title="Delete user">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 3h8M5 3V2h2v1M4 3v7h4V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>` : ''}
+            </div>
           </td>
         </tr>
         <tr class="user-audits-row" id="user-audits-row-${u.id}" style="display:none;">
-          <td colspan="6">
+          <td colspan="7">
             <div class="user-audits-inner" id="user-audits-inner-${u.id}"></div>
           </td>
         </tr>`;
     }).join('');
 
     tbody.querySelectorAll('.view-user-audits-btn').forEach(btn => {
-      btn.addEventListener('click', () =>
-        this.toggleUserAudits(parseInt(btn.dataset.userId), btn)
-      );
+      btn.addEventListener('click', () => this.toggleUserAudits(parseInt(btn.dataset.userId), btn));
+    });
+    tbody.querySelectorAll('.delete-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.deleteUser(parseInt(btn.dataset.userId), btn.dataset.userEmail));
     });
   },
 
@@ -230,6 +313,19 @@ const Admin = {
     this.renderUsers(filtered);
   },
 
+  async deleteUser(userId, email) {
+    if (!confirm(`Delete user "${email}" and ALL their audits? This cannot be undone.`)) return;
+    try {
+      await AdminAPI.deleteUser(userId);
+      showToast(`User ${email} deleted`, 'success');
+      await this.loadUsers();
+      await this.loadStats();
+      await this.loadRecentActivity();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete user', 'error');
+    }
+  },
+
   // ── All Audits ────────────────────────────────────────────────────────────
 
   async loadAudits(page = 1, status = '', search = '') {
@@ -252,35 +348,43 @@ const Admin = {
     const tbody = document.getElementById('audits-tbody');
 
     if (!audits.length) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:28px;">No audits found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:28px;">No audits found</td></tr>';
     } else {
       tbody.innerHTML = audits.map(a => {
         const statusDot = a.status === 'completed' ? 'dot-green'
                         : a.status === 'failed'    ? 'dot-red'
                         :                            'dot-orange';
         const rl = this.getRiskLevel(a.blackhat_risk_score);
+        const canDelete = a.status !== 'running';
         return `<tr>
           <td>
-            <div style="font-size:12px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;"
-              title="${a.url}">${displayUrl(a.url)}</div>
+            <div style="font-size:12px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;" title="${a.url}">${displayUrl(a.url)}</div>
             ${a.is_competitive ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(240,136,62,.1);color:var(--accent);">COMP</span>' : ''}
           </td>
-          <td style="font-size:11px;color:var(--text-muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${a.user_email}">${a.user_email}</td>
+          <td style="font-size:11px;color:var(--text-muted);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${a.user_email}">${a.user_email}</td>
           <td>${a.overall_score != null ? `<span class="score-pill ${scoreClass(a.overall_score)}">${a.overall_score}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
           <td style="font-size:12px;">${a.technical_score ?? '—'}</td>
           <td style="font-size:12px;">${a.content_score ?? '—'}</td>
           <td><span class="risk-badge ${riskClass(rl)}">${riskLabel(rl)}</span></td>
-          <td>
-            <span style="display:flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap;">
-              <span class="dot ${statusDot}"></span>${a.status}
-            </span>
-          </td>
+          <td><span style="display:flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap;"><span class="dot ${statusDot}"></span>${a.status}</span></td>
           <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${timeAgo(a.created_at)}</td>
           <td style="text-align:right;">
-            <a href="./results.html?id=${a.audit_id}" style="font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap;">View →</a>
+            <div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">
+              <a href="./results.html?id=${a.audit_id}" style="font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap;">View →</a>
+              ${canDelete ? `<button class="btn btn-ghost btn-sm delete-audit-row-btn" data-id="${a.audit_id}"
+                style="color:var(--critical);padding:4px 6px;" title="Delete audit">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 3h8M5 3V2h2v1M4 3v7h4V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>` : ''}
+            </div>
           </td>
         </tr>`;
       }).join('');
+
+      tbody.querySelectorAll('.delete-audit-row-btn').forEach(btn => {
+        btn.addEventListener('click', () => this.deleteAudit(parseInt(btn.dataset.id)));
+      });
     }
 
     const totalPages = Math.ceil(total / perPage) || 1;
@@ -298,6 +402,37 @@ const Admin = {
     if (score <= 35) return 'moderate';
     if (score <= 60) return 'high';
     return 'critical';
+  },
+
+  async deleteAudit(auditId) {
+    if (!confirm('Delete this audit? This cannot be undone.')) return;
+    try {
+      await AdminAPI.deleteAudit(auditId);
+      showToast('Audit deleted', 'success');
+      await this.loadAudits(this.auditPage, this.auditStatus, this.auditSearch);
+      await this.loadStats();
+      await this.loadRecentActivity();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete audit', 'error');
+    }
+  },
+
+  async exportAudits() {
+    const btn = document.getElementById('export-csv-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Exporting…'; }
+    try {
+      await AdminAPI.exportAudits();
+      showToast('CSV downloaded', 'success');
+    } catch (err) {
+      showToast('Export failed', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="margin-right:3px;">
+          <path d="M5.5 1v7M2.5 5.5l3 3 3-3M1 9.5h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>Export CSV`;
+      }
+    }
   },
 
   // ── Algorithm Updates ─────────────────────────────────────────────────────

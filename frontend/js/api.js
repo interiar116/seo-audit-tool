@@ -160,8 +160,14 @@ const AdminAPI = {
   getStats() {
     return apiFetch('/api/admin/stats');
   },
+  getRecentActivity() {
+    return apiFetch('/api/admin/recent-activity');
+  },
   getUsers() {
     return apiFetch('/api/admin/users');
+  },
+  deleteUser(userId) {
+    return apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
   },
   getUserAudits(userId) {
     return apiFetch(`/api/admin/users/${userId}/audits`);
@@ -171,6 +177,25 @@ const AdminAPI = {
     if (status) params.set('status', status);
     if (search) params.set('search', search);
     return apiFetch(`/api/admin/audits?${params}`);
+  },
+  deleteAudit(auditId) {
+    return apiFetch(`/api/admin/audits/${auditId}`, { method: 'DELETE' });
+  },
+  async exportAudits() {
+    const token = localStorage.getItem('auth_token');
+    const res = await fetch(`${API_BASE}/api/admin/audits/export`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audits-export-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
   getAlgorithmUpdates() {
     return apiFetch('/api/admin/algorithm-updates');
