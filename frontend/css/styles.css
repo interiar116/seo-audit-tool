@@ -551,6 +551,17 @@ p  { line-height: 1.65; }
    ══════════════════════════════════════════════════════════════ */
 
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stats-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+/* Tab bar — shared across dashboard and admin */
+.tab-bar { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 0; }
+.tab-btn {
+  padding: 9px 16px; font-size: 12px; font-weight: 500; color: #8b949e;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: color .15s, border-color .15s; margin-bottom: -0.5px;
+}
+.tab-btn.active { color: #e6edf3; border-bottom-color: var(--accent); }
+.tab-btn:hover:not(.active) { color: #c9d1d9; }
 .new-result-banner {
   display: flex; align-items: center; gap: 10px;
   background: rgba(240,136,62,.07); border: 0.5px solid var(--accent-border);

@@ -36,30 +36,7 @@
       #audit-tbody tr {
         transition: background 0.1s;
       }
-      .tab-bar {
-        display: flex;
-        border-bottom: 0.5px solid var(--border);
-        margin-bottom: 0;
-      }
-      .tab-btn {
-        padding: 9px 16px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #8b949e;
-        background: none;
-        border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        transition: color .15s, border-color .15s;
-        margin-bottom: -0.5px;
-      }
-      .tab-btn.active {
-        color: #e6edf3;
-        border-bottom-color: var(--accent);
-      }
-      .tab-btn:hover:not(.active) {
-        color: #c9d1d9;
-      }
+      /* tab-bar styles live in styles.css */
     </style>
   </head>
   <body>
@@ -147,6 +124,14 @@
             />
           </svg>
           New audit
+        </a>
+
+        <div class="nav-section-label" id="admin-section-label" style="display:none">Admin</div>
+        <a class="nav-item" id="nav-admin" href="./admin.html" style="display:none">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M7 1l5 2v4c0 3-2.5 5-5 6C4.5 12 2 10 2 7V3L7 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+          Admin Panel
         </a>
 
         <div class="nav-section-label">Account</div>

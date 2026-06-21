@@ -14,6 +14,7 @@ const Sidebar = {
       'audit-loading.html': 'nav-new-audit',
       'results.html':       'nav-dashboard',
       'settings.html':      'nav-settings',
+      'admin.html':         'nav-admin',
     };
     const activeId = navMap[page];
     if (activeId) {
@@ -47,6 +48,14 @@ const Sidebar = {
     if (badgeEl) {
       badgeEl.style.display = user.gsc_connected ? 'inline' : 'none';
     }
+
+    // Show admin nav only for admin email
+    const ADMIN_EMAIL = 'innovativeideas116@gmail.com';
+    const isAdmin = user.email === ADMIN_EMAIL;
+    const adminNavEl = document.getElementById('nav-admin');
+    const adminLabelEl = document.getElementById('admin-section-label');
+    if (adminNavEl) adminNavEl.style.display = isAdmin ? '' : 'none';
+    if (adminLabelEl) adminLabelEl.style.display = isAdmin ? '' : 'none';
   },
 
   /** Bind logout button */

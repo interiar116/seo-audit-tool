@@ -37,6 +37,9 @@ def create_app():
     from routes.audit_routes import audit_bp
     app.register_blueprint(audit_bp, url_prefix='/api/audit')
 
+    from routes.admin_routes import admin_bp
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
+
     # ── Health check (public) ────────────────────────────────────────────────
     @app.route('/api/health')
     def health():

@@ -153,6 +153,40 @@ const AuditAPI = {
 };
 
 /* ══════════════════════════════════════════════════════════════
+   ADMIN
+   ══════════════════════════════════════════════════════════════ */
+
+const AdminAPI = {
+  getStats() {
+    return apiFetch('/api/admin/stats');
+  },
+  getUsers() {
+    return apiFetch('/api/admin/users');
+  },
+  getUserAudits(userId) {
+    return apiFetch(`/api/admin/users/${userId}/audits`);
+  },
+  getAudits(page = 1, perPage = 25, status = '', search = '') {
+    const params = new URLSearchParams({ page, per_page: perPage });
+    if (status) params.set('status', status);
+    if (search) params.set('search', search);
+    return apiFetch(`/api/admin/audits?${params}`);
+  },
+  getAlgorithmUpdates() {
+    return apiFetch('/api/admin/algorithm-updates');
+  },
+  createAlgorithmUpdate(data) {
+    return apiFetch('/api/admin/algorithm-updates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  deleteAlgorithmUpdate(id) {
+    return apiFetch(`/api/admin/algorithm-updates/${id}`, { method: 'DELETE' });
+  },
+};
+
+/* ══════════════════════════════════════════════════════════════
    HELPERS
    ══════════════════════════════════════════════════════════════ */
 
