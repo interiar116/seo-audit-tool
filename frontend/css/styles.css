@@ -560,8 +560,8 @@ p  { line-height: 1.65; }
   background: none; border: none; border-bottom: 2px solid transparent;
   cursor: pointer; transition: color .15s, border-color .15s; margin-bottom: -0.5px;
 }
-.tab-btn.active { color: #e6edf3; border-bottom-color: var(--accent); }
-.tab-btn:hover:not(.active) { color: #c9d1d9; }
+.tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+.tab-btn:hover:not(.active) { color: var(--text-secondary); }
 .new-result-banner {
   display: flex; align-items: center; gap: 10px;
   background: rgba(240,136,62,.07); border: 0.5px solid var(--accent-border);
